@@ -7,16 +7,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --sage:   #9ec49a;
-      --teal:   #88b8b4;
-      --blue:   #90aec8;
-      --moss:   #7ea87a;
-      --gold:   #c8b870;
-      --cream:  #f2efe8;
-      --text:   #2e3428;
-      --muted:  #6e7a6c;
-      --accent: #5e9882;
-      --kompas-blue: #4878a8;
+      --sage:  #9ec49a;
+      --teal:  #88b8b4;
+      --blue:  #90aec8;
+      --moss:  #7ea87a;
+      --gold:  #c8b870;
+      --cream: #f2efe8;
+      --text:  #2e3428;
+      --muted: #6e7a6c;
+      --accent:#5e9882;
+      --kb:    #4878a8;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -28,6 +28,8 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
+
+    /* background blobs */
     .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
     .blob { position: absolute; border-radius: 50%; filter: blur(85px); }
     .blob-1 { width: 580px; height: 580px; background: var(--sage); opacity: 0.42; top: -160px; left: -170px; }
@@ -35,17 +37,6 @@
     .blob-3 { width: 340px; height: 340px; background: var(--teal); opacity: 0.32; top: 38%; right: 4%; }
     .blob-4 { width: 260px; height: 260px; background: var(--gold); opacity: 0.16; bottom: 22%; left: 6%; }
     .blob-5 { width: 220px; height: 220px; background: var(--moss); opacity: 0.26; top: 62%; left: -70px; }
-
-    /* full-page fixed canvas for animation — always on top, never clipped */
-    #animCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 5;
-    }
 
     main {
       position: relative;
@@ -57,11 +48,14 @@
       flex-direction: column;
       min-height: 100vh;
     }
+
+    /* hero */
     .hero {
       padding-top: clamp(5rem, 15vh, 9rem);
       padding-bottom: 0;
       animation: fadeUp 1.2s ease both;
       text-align: center;
+      position: relative; /* so absolute canvas inside is relative to this */
     }
     .title {
       font-family: 'Cormorant Garamond', serif;
@@ -69,14 +63,27 @@
       font-size: clamp(4rem, 12vw, 7rem);
       letter-spacing: 0.06em;
       line-height: 1;
-      color: var(--kompas-blue);
+      color: var(--kb);
       display: inline-block;
+      position: relative;
+      z-index: 2;
     }
+
+    /* animation canvas — absolute inside .hero, scrolls with content */
+    #animCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+
     .subtitles-wrap {
       margin-top: calc(clamp(1.0rem, 2.4vw, 1.2rem) * 1.6);
       animation: fadeUp 1.4s ease both;
-      /* JS positions this */
       position: relative;
+      z-index: 2;
     }
     .subtitles-inner {
       display: inline-flex;
@@ -91,7 +98,9 @@
       letter-spacing: 0.04em;
       white-space: nowrap;
     }
+
     .body-gap { height: 2rem; }
+
     .body-text { animation: fadeUp 1.8s ease both; }
     .body-text p {
       font-size: clamp(0.95rem, 2vw, 1.05rem);
@@ -107,11 +116,8 @@
       font-size: 1.1em;
       color: var(--muted);
     }
-    .kompas-sym {
-      font-size: 1em;
-      color: var(--accent);
-      vertical-align: middle;
-    }
+    .kompas-sym { font-size: 1em; color: var(--accent); vertical-align: middle; }
+
     .contact {
       margin-top: 4rem;
       padding: 2.2rem 2.4rem;
@@ -132,17 +138,16 @@
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.35rem;
       font-weight: 400;
-      color: var(--kompas-blue);
+      color: var(--kb);
       margin-bottom: 0.9rem;
     }
     .contact-links { display: flex; flex-direction: column; gap: 0.4rem; }
     .contact-links a {
-      font-size: 0.9rem;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.3s;
+      font-size: 0.9rem; color: var(--muted);
+      text-decoration: none; transition: color 0.3s;
     }
     .contact-links a:hover { color: var(--text); }
+
     footer {
       margin-top: auto;
       padding: 3rem 0 2rem;
@@ -152,13 +157,12 @@
       text-align: center;
       animation: fadeUp 2.2s ease both;
     }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @media (max-width: 480px) {
-      .contact { padding: 1.6rem; }
-    }
+    @media (max-width: 480px) { .contact { padding: 1.6rem; } }
   </style>
 </head>
 <body>
@@ -170,12 +174,10 @@
     <div class="blob blob-5"></div>
   </div>
 
-  <!-- animation canvas: fixed, full viewport, always visible -->
-  <canvas id="animCanvas"></canvas>
-
   <main id="mainEl">
     <section class="hero" id="heroEl">
       <h1 class="title" id="titleEl">Kompas</h1>
+      <canvas id="animCanvas"></canvas>
       <div class="subtitles-wrap" id="subtitlesWrap">
         <div class="subtitles-inner">
           <p id="sub1">Místo pro ticho.</p>
@@ -189,7 +191,7 @@
 
     <section class="body-text">
       <p>Někdy stačí, aby byl někdo přítomen. Bez rad, bez hodnocení, bez tlaku na změnu. Jen člověk naproti, který slyší.</p>
-      <p>Nabízím setkání &nbsp;<span class="kompas-sym">⌖</span>&nbsp;&nbsp;&nbsp;v kavárně, na lavičce, při procházce. Můžeme mlčet, nebo mluvit o tom, co tě tíží. Nepřináším řešení. Přináším prostor, ve kterém si možná sám najdeš, kde stojíš a kam chceš jít.</p>
+      <p>Nabízím setkání &nbsp;<span class="kompas-sym">⌖</span>&nbsp;&nbsp;&nbsp;v kavárně, na lavičce, při procházce. Můžeme mlčet nebo mluvit o tom, co Tě tíží. Nepřináším řešení. Přináším prostor, ve kterém možná sám najdeš, kde stojíš a kam chceš jít.</p>
       <p class="center-line"><em>Nejsem terapeut ani kouč. Jsem člověk s časem a pozorností.</em></p>
       <p>Pokud tě to oslovuje, napiš mi.</p>
     </section>
@@ -198,7 +200,7 @@
       <p class="contact-label">Kontakt</p>
       <p class="contact-name">Miroslav Bátěk</p>
       <div class="contact-links">
-        <a href="mailto:budbytost@proton.me">budbytost@proton.me</a>
+        <a href="/cdn-cgi/l/email-protection#1e7c6b7a7c676a716d6a5e6e6c716a717030737b"><span class="__cf_email__" data-cfemail="c1a3b4a5a3b8b5aeb2b581b1b3aeb5aeafefaca4">[email&#160;protected]</span></a>
         <a href="tel:+420775912052">+420 775 912 052</a>
       </div>
     </div>
@@ -206,13 +208,17 @@
     <footer>Praha &amp; okolí &nbsp;·&nbsp; 2026</footer>
   </main>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // Elements
   const canvas        = document.getElementById('animCanvas');
   const ctx           = canvas.getContext('2d');
   const titleEl       = document.getElementById('titleEl');
+  const heroEl        = document.getElementById('heroEl');
+  const mainEl        = document.getElementById('mainEl');
   const sub1          = document.getElementById('sub1');
   const subtitlesWrap = document.getElementById('subtitlesWrap');
 
+  // Drawing constants
   const LW        = 1.5;
   const C_GREEN   = '#5e9882';
   const C_BLUE    = '#4878a8';
@@ -220,8 +226,8 @@
   const CIRCLE_R  = 13;
   const NEEDLE_LEN = 50;
 
-  // Animation center in VIEWPORT coords (since canvas is fixed)
-  let cx = 300, cy = 200;
+  // Animation center in CANVAS-LOCAL coords (canvas is absolute inside hero)
+  let cx = 100, cy = 100;
 
   function getCharRect(index) {
     const range = document.createRange();
@@ -231,52 +237,49 @@
   }
 
   function layout() {
-    // Resize canvas to viewport
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    // cx set below after subtitles block
-    const aRect = getCharRect(4);
-
-    // cy set below
+    const heroRect = heroEl.getBoundingClientRect();
+    const mainRect = mainEl.getBoundingClientRect();
     const sub1Rect = sub1.getBoundingClientRect();
+    const aRect    = getCharRect(4); // 'a'
+    const kRect    = getCharRect(0); // 'K'
+    const pRect    = getCharRect(3); // 'p'
+    const aW       = aRect.width;
 
-    // Position subtitles between K and p
-    const kRect = getCharRect(0);
-    const pRect = getCharRect(3);
-    const aW    = aRect.width;
+    // Canvas: covers full hero + needle overshoot
+    const cw = Math.round(heroRect.width);
+    const ch = Math.round(heroRect.height + NEEDLE_LEN + 20);
+    canvas.width  = cw;
+    canvas.height = ch;
+    canvas.style.width  = cw + 'px';
+    canvas.style.height = ch + 'px';
 
-    // In page layout, subtitles-wrap is inside main which has its own left offset
-    // Use left relative to parent (hero, which is inside main)
-    const heroRect = document.getElementById('heroEl').getBoundingClientRect();
-    const mainRect = document.getElementById('mainEl').getBoundingClientRect();
+    // cx, cy in canvas-local coords = viewport coords minus hero top-left
+    // (because canvas position:absolute top:0 left:0 inside hero)
+    cx = aRect.left - heroRect.left;
+    cy = (sub1Rect.top + sub1Rect.height / 2) - heroRect.top + (sub1Rect.height * 0.5);
 
-    const kLeftInMain = kRect.left - mainRect.left;
+    // Subtitles: position relative to main, shifted left by 2 char widths
+    const kLeftInMain  = kRect.left  - mainRect.left;
     const pRightInMain = pRect.right - mainRect.left;
     const zoneW = pRightInMain - kLeftInMain;
-    const shift = aW * 2; // 2 chars left total (was 1, add another)
+    const shift = aW * 2;
 
     subtitlesWrap.style.position    = 'relative';
     subtitlesWrap.style.left        = (kLeftInMain - shift) + 'px';
     subtitlesWrap.style.width       = (zoneW + shift) + 'px';
     subtitlesWrap.style.textAlign   = 'center';
     subtitlesWrap.style.paddingLeft = '0';
-
-    // animation: center of 'a' minus half char width, one line higher
-    cx = aRect.left + aRect.width / 2 - aRect.width / 2;
-    cy = sub1Rect.top + sub1Rect.height / 2 + sub1Rect.height * 0.5 - sub1Rect.height;
   }
 
+  // Run layout after fonts, after load, and after short delays
+  document.fonts.ready.then(layout);
+  window.addEventListener('load',   layout);
   window.addEventListener('resize', layout);
-  // Run after fonts load
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => { layout(); });
-  }
-  window.addEventListener('load', layout);
-  setTimeout(layout, 300);
+  setTimeout(layout, 200);
+  setTimeout(layout, 600);
 
-  // ── Animation phases ──────────────────────────────────────────────────
-  // 0 (2.0s): needle pulse rises from cy+NEEDLE_LEN to cy
+  // Animation phases
+  // 0 (2.0s): needle pulse rises from cy+NEEDLE_LEN → cy
   // 1 (2.0s): circle + 7 rays bloom and fade
   // 2 (3.4s): pause
   const PH    = [2.0, 2.0, 3.4];
@@ -296,17 +299,18 @@
 
   function draw(ts) {
     if (!startTs) startTs = ts;
-    const { phase, pt } = getPhase((ts - startTs) / 1000);
+    const elapsed = (ts - startTs) / 1000;
+    const { phase, pt } = getPhase(elapsed);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const needleBottom = cy + NEEDLE_LEN;
 
-    // faint base needle
+    // faint base needle always visible
     ctx.save();
-    ctx.globalAlpha = 0.10;
+    ctx.globalAlpha = 0.12;
     ctx.strokeStyle = C_GREEN;
-    ctx.lineWidth = LW;
+    ctx.lineWidth   = LW;
     ctx.beginPath();
     ctx.moveTo(cx, needleBottom);
     ctx.lineTo(cx, cy);
@@ -314,21 +318,21 @@
     ctx.restore();
 
     if (phase === 0) {
+      // pulse travels upward
       const frontY  = needleBottom - pt * NEEDLE_LEN;
       const bandLen = NEEDLE_LEN * 0.4;
-      const gradBot = Math.min(needleBottom, frontY + bandLen);
-      const gradTop = Math.max(cy, frontY);
-
-      if (gradBot > gradTop) {
-        const g = ctx.createLinearGradient(0, gradBot, 0, gradTop);
+      const gBot    = Math.min(needleBottom, frontY + bandLen);
+      const gTop    = Math.max(cy, frontY);
+      if (gBot > gTop) {
+        const g = ctx.createLinearGradient(0, gBot, 0, gTop);
         g.addColorStop(0, 'rgba(94,152,130,0)');
         g.addColorStop(1, 'rgba(94,152,130,0.92)');
         ctx.save();
         ctx.strokeStyle = g;
-        ctx.lineWidth = LW;
+        ctx.lineWidth   = LW;
         ctx.beginPath();
-        ctx.moveTo(cx, gradBot);
-        ctx.lineTo(cx, gradTop);
+        ctx.moveTo(cx, gBot);
+        ctx.lineTo(cx, gTop);
         ctx.stroke();
         ctx.restore();
       }
@@ -341,24 +345,24 @@
       ctx.save();
       ctx.globalAlpha = (1 - pt) * 0.4;
       ctx.strokeStyle = C_GREEN;
-      ctx.lineWidth = LW;
+      ctx.lineWidth   = LW;
       ctx.beginPath();
       ctx.moveTo(cx, needleBottom);
       ctx.lineTo(cx, cy);
       ctx.stroke();
       ctx.restore();
 
-      // circle
+      // circle fixed radius
       ctx.save();
       ctx.globalAlpha = alpha * 0.88;
       ctx.strokeStyle = C_BLUE;
-      ctx.lineWidth = LW;
+      ctx.lineWidth   = LW;
       ctx.beginPath();
       ctx.arc(cx, cy, CIRCLE_R, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
 
-      // 7 rays: 0,45,135,180,225,270,315
+      // 7 rays fading to transparent at tips
       const rLen = bloom * RAY_LEN;
       if (rLen > 0.5) {
         [0, 45, 135, 180, 225, 270, 315].map(d => d * Math.PI / 180).forEach(a => {
@@ -366,23 +370,13 @@
           const y2 = cy + Math.sin(a) * rLen;
           const rg = ctx.createLinearGradient(cx, cy, x2, y2);
           rg.addColorStop(0, `rgba(72,120,168,${alpha * 0.88})`);
-          rg.addColorStop(1, `rgba(72,120,168,0)`);
+          rg.addColorStop(1, 'rgba(72,120,168,0)');
           ctx.save();
           ctx.strokeStyle = rg;
-          ctx.lineWidth = LW;
+          ctx.lineWidth   = LW;
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.lineTo(x2, y2);
           ctx.stroke();
           ctx.restore();
-        });
-      }
-    }
-
-    requestAnimationFrame(draw);
-  }
-
-  requestAnimationFrame(draw);
-  </script>
-</body>
-</html>
+        }
